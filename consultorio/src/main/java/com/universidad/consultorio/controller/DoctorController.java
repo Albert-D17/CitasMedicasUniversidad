@@ -6,41 +6,50 @@ import com.universidad.consultorio.dto.response.DoctorResponse;
 import com.universidad.consultorio.service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor
+@Validated
 public class DoctorController {
 
-    private final DoctorService doctorService;
+    private final DoctorService service;
 
     @PostMapping
-    public ResponseEntity<DoctorResponse> create(@Valid @RequestBody CreateDoctorRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(doctorService.create(request));
+    public ResponseEntity<DoctorResponse> create(@Valid @RequestBody CreateDoctorRequest req,
+                                                 UriComponentsBuilder uriBuilder) {
+        var created = service.create(req);
+        var location = uriBuilder.path("/api/doctors/{id}").buildAndExpand(created.id()).toUri();
+        return ResponseEntity.created(location).body(created);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DoctorResponse> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(doctorService.findById(id));
+        return ResponseEntity.ok(service.findById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<DoctorResponse>> findAll(
-            @RequestParam(required = false) Long specialtyId) {
+    public ResponseEntity<Page<DoctorResponse>> findAll(
+            @RequestParam(required = false) Long specialtyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        var pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         if (specialtyId != null) {
-            return ResponseEntity.ok(doctorService.findBySpecialty(specialtyId));
+            return ResponseEntity.ok(service.findBySpecialty(specialtyId, pageable));
         }
-        return ResponseEntity.ok(doctorService.findAll());
+        return ResponseEntity.ok(service.findAll(pageable));
     }
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<DoctorResponse> update(@PathVariable Long id,
-                                                  @Valid @RequestBody UpdateDoctorRequest request) {
-        return ResponseEntity.ok(doctorService.update(id, request));
+                                                 @Valid @RequestBody UpdateDoctorRequest req) {
+        return ResponseEntity.ok(service.update(id, req));
     }
 }

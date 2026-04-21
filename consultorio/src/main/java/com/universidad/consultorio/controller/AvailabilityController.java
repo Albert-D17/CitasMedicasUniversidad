@@ -3,25 +3,33 @@ package com.universidad.consultorio.controller;
 import com.universidad.consultorio.dto.response.AvailabilitySlotResponse;
 import com.universidad.consultorio.service.AvailabilityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/availability")
 @RequiredArgsConstructor
+@Validated
 public class AvailabilityController {
 
-    private final AvailabilityService availabilityService;
+    private final AvailabilityService service;
 
     @GetMapping("/doctors/{doctorId}")
-    public ResponseEntity<List<AvailabilitySlotResponse>> getAvailableSlots(
+    public ResponseEntity<Page<AvailabilitySlotResponse>> getAvailableSlots(
             @PathVariable Long doctorId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam Long appointmentTypeId) {
-        return ResponseEntity.ok(availabilityService.getAvailableSlots(doctorId, date, appointmentTypeId));
+            @RequestParam Long appointmentTypeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        var result = service.getAvailableSlots(doctorId, date, appointmentTypeId,
+                PageRequest.of(page, size, Sort.by("id").ascending()));
+        return ResponseEntity.ok(result);
     }
 }

@@ -5,26 +5,35 @@ import com.universidad.consultorio.dto.response.AppointmentTypeResponse;
 import com.universidad.consultorio.service.AppointmentTypeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping("/api/appointment-types")
 @RequiredArgsConstructor
+@Validated
 public class AppointmentTypeController {
 
-    private final AppointmentTypeService appointmentTypeService;
+    private final AppointmentTypeService service;
 
     @PostMapping
-    public ResponseEntity<AppointmentTypeResponse> create(@Valid @RequestBody CreateAppointmentTypeRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(appointmentTypeService.create(request));
+    public ResponseEntity<AppointmentTypeResponse> create(@Valid @RequestBody CreateAppointmentTypeRequest req,
+                                                          UriComponentsBuilder uriBuilder) {
+        var created = service.create(req);
+        var location = uriBuilder.path("/api/appointment-types/{id}").buildAndExpand(created.id()).toUri();
+        return ResponseEntity.created(location).body(created);
     }
 
     @GetMapping
-    public ResponseEntity<List<AppointmentTypeResponse>> findAll() {
-        return ResponseEntity.ok(appointmentTypeService.findAll());
+    public ResponseEntity<Page<AppointmentTypeResponse>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        var result = service.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+        return ResponseEntity.ok(result);
     }
 }
