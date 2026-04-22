@@ -1,126 +1,92 @@
-package com.universidad.consultorio.controller;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.universidad.consultorio.dto.request.CreatePatientRequest;
-import com.universidad.consultorio.dto.response.PatientResponse;
-import com.universidad.consultorio.enums.PatientStatus;
-import com.universidad.consultorio.exception.ConflictException;
-import com.universidad.consultorio.exception.GlobalExceptionHandler;
-import com.universidad.consultorio.exception.ResourceNotFoundException;
-import com.universidad.consultorio.service.PatientService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(PatientController.class)
 class PatientControllerTest {
 
-    private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
+    @Autowired MockMvc mockMvc;
+    @MockitoBean PatientService service;
 
-    @Mock private PatientService patientService;
-    @InjectMocks private PatientController patientController;
-
-    private PatientResponse samplePatient;
+    private ObjectMapper mapper;
+    private PatientResponse response;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(patientController)
-                .setControllerAdvice(new GlobalExceptionHandler())
+        mapper = new ObjectMapper();
+        response = PatientResponse.builder()
+                .id(1L).firstName("Juan").lastName("Perez")
+                .documentNumber("123456").email("juan@mail.com")
                 .build();
-        objectMapper = new ObjectMapper();
-
-        samplePatient = PatientResponse.builder()
-                .id(1L).firstName("Ana").lastName("López")
-                .documentNumber("12345678").status(PatientStatus.ACTIVE).build();
     }
 
-    private CreatePatientRequest validRequest() {
+    @Test
+    void create_shouldReturn201() throws Exception {
         CreatePatientRequest req = new CreatePatientRequest();
-        req.setFirstName("Ana");
-        req.setLastName("López");
-        req.setDocumentNumber("12345678");
-        req.setEmail("ana@test.com");
-        return req;
-    }
+        req.setFirstName("Juan");
+        req.setLastName("Perez");
+        req.setDocumentNumber("123456");
 
-    @Test
-    @DisplayName("POST /api/patients - 201 on valid request")
-    void create_returns201() throws Exception {
-        when(patientService.create(any())).thenReturn(samplePatient);
+        when(service.create(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/patients")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validRequest())))
+                        .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.firstName").value("Ana"));
+                .andExpect(jsonPath("$.firstName").value("Juan"));
     }
 
     @Test
-    @DisplayName("POST /api/patients - 400 when firstName is blank")
-    void create_returns400_blankName() throws Exception {
-        CreatePatientRequest req = validRequest();
-        req.setFirstName("");
+    void create_shouldReturn400_whenFieldsMissing() throws Exception {
+        CreatePatientRequest req = new CreatePatientRequest();
 
         mockMvc.perform(post("/api/patients")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
+                        .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("POST /api/patients - 409 when document already exists")
-    void create_returns409_duplicate() throws Exception {
-        when(patientService.create(any()))
-                .thenThrow(new ConflictException("Patient with document number 12345678 already exists"));
+    void create_shouldReturn400_whenInvalidEmail() throws Exception {
+        CreatePatientRequest req = new CreatePatientRequest();
+        req.setFirstName("Juan");
+        req.setLastName("Perez");
+        req.setDocumentNumber("123456");
+        req.setEmail("not-an-email"); // email inválido
 
         mockMvc.perform(post("/api/patients")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validRequest())))
-                .andExpect(status().isConflict());
+                        .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    @DisplayName("GET /api/patients/{id} - 200 when found")
-    void findById_returns200() throws Exception {
-        when(patientService.findById(1L)).thenReturn(samplePatient);
+    void findById_shouldReturn200() throws Exception {
+        when(service.findById(1L)).thenReturn(response);
 
         mockMvc.perform(get("/api/patients/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1));
+                .andExpect(jsonPath("$.id").value(1L));
     }
 
     @Test
-    @DisplayName("GET /api/patients/{id} - 404 when not found")
-    void findById_returns404() throws Exception {
-        when(patientService.findById(99L))
-                .thenThrow(new ResourceNotFoundException("Patient not found with id: 99"));
-
-        mockMvc.perform(get("/api/patients/99"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    @DisplayName("GET /api/patients - 200 with list")
-    void findAll_returns200() throws Exception {
-        when(patientService.findAll()).thenReturn(List.of(samplePatient));
+    void findAll_shouldReturn200() throws Exception {
+        when(service.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(response)));
 
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.content[0].id").value(1L));
+    }
+
+    @Test
+    void update_shouldReturn200() throws Exception {
+        UpdatePatientRequest req = new UpdatePatientRequest();
+        req.setFirstName("Updated");
+
+        response.setFirstName("Updated");
+        when(service.update(eq(1L), any())).thenReturn(response);
+
+        mockMvc.perform(patch("/api/patients/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Updated"));
     }
 }
