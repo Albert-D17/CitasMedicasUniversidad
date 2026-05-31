@@ -1,8 +1,8 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.response.DoctorProductivityResponse;
-import com.universidad.consultorio.dto.response.NoShowPatientResponse;
-import com.universidad.consultorio.dto.response.OfficeOccupancyResponse;
+import com.universidad.consultorio.dto.Response.OfficeOccupancyResponse;
+import com.universidad.consultorio.dto.Response.DoctorProductivityResponse;
+import com.universidad.consultorio.dto.Response.NoShowPatientResponse;
 import com.universidad.consultorio.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

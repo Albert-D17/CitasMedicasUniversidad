@@ -1,7 +1,8 @@
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.request.CreateDoctorScheduleRequest;
-import com.universidad.consultorio.dto.response.DoctorScheduleResponse;
+import com.universidad.consultorio.dto.Request.CreateDoctorScheduleRequest;
+import com.universidad.consultorio.dto.Response.DoctorScheduleResponse;
+
 import com.universidad.consultorio.entity.Doctor;
 import com.universidad.consultorio.entity.DoctorSchedule;
 import com.universidad.consultorio.exception.BusinessException;
@@ -11,6 +12,8 @@ import com.universidad.consultorio.repository.DoctorRepository;
 import com.universidad.consultorio.repository.DoctorScheduleRepository;
 import com.universidad.consultorio.service.DoctorScheduleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +27,9 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
     private final DoctorRepository doctorRepository;
     private final DoctorScheduleMapper doctorScheduleMapper;
 
+
+
     @Override
-    @Transactional
     public DoctorScheduleResponse create(Long doctorId, CreateDoctorScheduleRequest request) {
         Doctor doctor = doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + doctorId));
@@ -34,16 +38,16 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
             throw new BusinessException("Cannot add schedule to an inactive doctor");
         }
 
-        if (request.getStartTime().isAfter(request.getEndTime()) ||
-            request.getStartTime().equals(request.getEndTime())) {
+        if (request.startTime().isAfter(request.endTime()) ||
+                request.startTime().equals(request.endTime())) {
             throw new BusinessException("Start time must be before end time");
         }
 
         DoctorSchedule schedule = DoctorSchedule.builder()
                 .doctor(doctor)
-                .dayOfWeek(request.getDayOfWeek())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
+                .dayOfWeek(request.dayOfWeek())
+                .startTime(request.startTime())
+                .endTime(request.endTime())
                 .build();
 
         return doctorScheduleMapper.toResponse(doctorScheduleRepository.save(schedule));
@@ -51,11 +55,11 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DoctorScheduleResponse> findByDoctor(Long doctorId) {
+    public Page<DoctorScheduleResponse> findByDoctor(Long doctorId, Pageable page) {
         if (!doctorRepository.existsById(doctorId)) {
             throw new ResourceNotFoundException("Doctor not found with id: " + doctorId);
         }
-        return doctorScheduleRepository.findByDoctorId(doctorId)
-                .stream().map(doctorScheduleMapper::toResponse).toList();
+        return doctorScheduleRepository.findByDoctorId(doctorId, page)
+                .map(doctorScheduleMapper::toResponse);
     }
 }

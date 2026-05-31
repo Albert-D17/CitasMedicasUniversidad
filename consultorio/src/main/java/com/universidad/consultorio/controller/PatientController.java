@@ -1,8 +1,8 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CreatePatientRequest;
-import com.universidad.consultorio.dto.request.UpdatePatientRequest;
-import com.universidad.consultorio.dto.response.PatientResponse;
+import com.universidad.consultorio.dto.Request.UpdatePatientRequest;
+import com.universidad.consultorio.dto.Response.PatientResponse;
+import com.universidad.consultorio.dto.Request.CreatePatientRequest;
 import com.universidad.consultorio.service.PatientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

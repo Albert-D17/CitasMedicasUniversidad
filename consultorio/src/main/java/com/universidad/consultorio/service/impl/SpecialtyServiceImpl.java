@@ -1,7 +1,8 @@
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.request.CreateSpecialtyRequest;
-import com.universidad.consultorio.dto.response.SpecialtyResponse;
+import com.universidad.consultorio.dto.Response.SpecialtyResponse;
+import com.universidad.consultorio.dto.Request.CreateSpecialtyRequest;
+import com.universidad.consultorio.dto.Response.SpecialtyResponse;
 import com.universidad.consultorio.entity.Specialty;
 import com.universidad.consultorio.exception.ConflictException;
 import com.universidad.consultorio.exception.ResourceNotFoundException;
@@ -9,6 +10,8 @@ import com.universidad.consultorio.mapper.SpecialtyMapper;
 import com.universidad.consultorio.repository.SpecialtyRepository;
 import com.universidad.consultorio.service.SpecialtyService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,12 +27,12 @@ public class SpecialtyServiceImpl implements SpecialtyService {
     @Override
     @Transactional
     public SpecialtyResponse create(CreateSpecialtyRequest request) {
-        specialtyRepository.findByNameIgnoreCase(request.getName())
-                .ifPresent(s -> { throw new ConflictException("Specialty already exists: " + request.getName()); });
+        specialtyRepository.findByNameIgnoreCase(request.name())
+                .ifPresent(s -> { throw new ConflictException("Specialty already exists: " + request.name()); });
 
         Specialty specialty = Specialty.builder()
-                .name(request.getName())
-                .description(request.getDescription())
+                .name(request.name())
+                .description(request.description())
                 .build();
 
         return specialtyMapper.toResponse(specialtyRepository.save(specialty));
@@ -37,8 +40,9 @@ public class SpecialtyServiceImpl implements SpecialtyService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<SpecialtyResponse> findAll() {
-        return specialtyRepository.findAll().stream().map(specialtyMapper::toResponse).toList();
+    public Page<SpecialtyResponse> findAll(Pageable pageable) {
+        return specialtyRepository.findAll(pageable)
+                .map(specialtyMapper::toResponse);
     }
 
     @Override

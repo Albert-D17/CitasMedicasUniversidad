@@ -1,7 +1,7 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CreateDoctorScheduleRequest;
-import com.universidad.consultorio.dto.response.DoctorScheduleResponse;
+import com.universidad.consultorio.dto.Request.CreateDoctorScheduleRequest;
+import com.universidad.consultorio.dto.Response.DoctorScheduleResponse;
 import com.universidad.consultorio.service.DoctorScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

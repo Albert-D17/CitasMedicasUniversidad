@@ -1,12 +1,14 @@
 package com.universidad.consultorio.service;
 
-import com.universidad.consultorio.dto.request.CreateSpecialtyRequest;
-import com.universidad.consultorio.dto.response.SpecialtyResponse;
+import com.universidad.consultorio.dto.Request.CreateSpecialtyRequest;
+import com.universidad.consultorio.dto.Response.SpecialtyResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface SpecialtyService {
     SpecialtyResponse create(CreateSpecialtyRequest request);
-    List<SpecialtyResponse> findAll();
+    Page<SpecialtyResponse> findAll(Pageable page);
     SpecialtyResponse findById(Long id);
 }

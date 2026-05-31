@@ -1,8 +1,8 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CreateDoctorRequest;
-import com.universidad.consultorio.dto.request.UpdateDoctorRequest;
-import com.universidad.consultorio.dto.response.DoctorResponse;
+import com.universidad.consultorio.dto.Request.CreateDoctorRequest;
+import com.universidad.consultorio.dto.Request.UpdateDoctorRequest;
+import com.universidad.consultorio.dto.Response.DoctorResponse;
 import com.universidad.consultorio.service.DoctorService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -36,7 +38,7 @@ public class DoctorController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<DoctorResponse>> findAll(
+    public ResponseEntity<List<DoctorResponse>> findAll(
             @RequestParam(required = false) Long specialtyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -47,9 +49,11 @@ public class DoctorController {
         return ResponseEntity.ok(service.findAll(pageable));
     }
 
+
     @PatchMapping("/{id}")
-    public ResponseEntity<DoctorResponse> update(@PathVariable Long id,
-                                                 @Valid @RequestBody UpdateDoctorRequest req) {
-        return ResponseEntity.ok(service.update(id, req));
+    public ResponseEntity<DoctorResponse> updateDoctor(
+            @PathVariable Long id,
+            @RequestBody UpdateDoctorRequest request) {
+        return ResponseEntity.ok(service.update(id, request));
     }
 }

@@ -1,8 +1,8 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CreateOfficeRequest;
-import com.universidad.consultorio.dto.request.UpdateOfficeRequest;
-import com.universidad.consultorio.dto.response.OfficeResponse;
+import com.universidad.consultorio.dto.Request.UpdateOfficeRequest;
+import com.universidad.consultorio.dto.Response.OfficeResponse;
+import com.universidad.consultorio.dto.Request.CreateOfficeRequest;
 import com.universidad.consultorio.service.OfficeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +34,7 @@ public class OfficeController {
     public ResponseEntity<Page<OfficeResponse>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        var result = service.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+        Page<OfficeResponse> result = service.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
         return ResponseEntity.ok(result);
     }
 

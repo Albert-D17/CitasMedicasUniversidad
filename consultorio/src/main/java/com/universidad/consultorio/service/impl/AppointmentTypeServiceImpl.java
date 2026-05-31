@@ -1,12 +1,14 @@
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.request.CreateAppointmentTypeRequest;
-import com.universidad.consultorio.dto.response.AppointmentTypeResponse;
+import com.universidad.consultorio.dto.Request.CreateAppointmentTypeRequest;
+import com.universidad.consultorio.dto.Response.AppointmentTypeResponse;
 import com.universidad.consultorio.entity.AppointmentType;
 import com.universidad.consultorio.mapper.AppointmentTypeMapper;
 import com.universidad.consultorio.repository.AppointmentTypeRepository;
 import com.universidad.consultorio.service.AppointmentTypeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,16 +25,17 @@ public class AppointmentTypeServiceImpl implements AppointmentTypeService {
     @Transactional
     public AppointmentTypeResponse create(CreateAppointmentTypeRequest request) {
         AppointmentType at = AppointmentType.builder()
-                .name(request.getName())
-                .durationMinutes(request.getDurationMinutes())
-                .description(request.getDescription())
+                .name(request.name())
+                .durationMinutes(request.durationMinutes())
+                .description(request.description())
                 .build();
         return appointmentTypeMapper.toResponse(appointmentTypeRepository.save(at));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<AppointmentTypeResponse> findAll() {
-        return appointmentTypeRepository.findAll().stream().map(appointmentTypeMapper::toResponse).toList();
+    public Page<AppointmentTypeResponse> findAll(Pageable pageable) {
+        return appointmentTypeRepository.findAll(pageable)
+                .map(appointmentTypeMapper::toResponse);
     }
 }

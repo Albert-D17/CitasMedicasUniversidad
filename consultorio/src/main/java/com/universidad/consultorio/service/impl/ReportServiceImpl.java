@@ -1,16 +1,19 @@
+
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.response.DoctorProductivityResponse;
-import com.universidad.consultorio.dto.response.NoShowPatientResponse;
-import com.universidad.consultorio.dto.response.OfficeOccupancyResponse;
+import com.universidad.consultorio.dto.Response.DoctorProductivityResponse;
+import com.universidad.consultorio.dto.Response.NoShowPatientResponse;
+import com.universidad.consultorio.dto.Response.OfficeOccupancyResponse;
 import com.universidad.consultorio.repository.AppointmentRepository;
 import com.universidad.consultorio.service.ReportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -21,45 +24,63 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<OfficeOccupancyResponse> getOfficeOccupancy(LocalDate from, LocalDate to) {
-        return appointmentRepository
+    public Page<OfficeOccupancyResponse> getOfficeOccupancy(LocalDate from, LocalDate to, Pageable pageable) {
+        List<OfficeOccupancyResponse> allResponses = appointmentRepository
                 .findOfficeOccupancy(from.atStartOfDay(), to.plusDays(1).atStartOfDay())
                 .stream()
-                .map(row -> OfficeOccupancyResponse.builder()
-                        .officeId(((Number) row[0]).longValue())
-                        .officeName((String) row[1])
-                        .appointmentCount(((Number) row[2]).longValue())
-                        .build())
+                .map(row -> new OfficeOccupancyResponse(
+                        ((Number) row[0]).longValue(),
+                        (String) row[1],
+                        ((Number) row[2]).longValue()
+                ))
                 .toList();
+
+        return applyPagination(allResponses, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DoctorProductivityResponse> getDoctorProductivity(LocalDate from, LocalDate to) {
-        return appointmentRepository
+    public Page<DoctorProductivityResponse> getDoctorProductivity(LocalDate from, LocalDate to, Pageable pageable) {
+        List<DoctorProductivityResponse> allResponses = appointmentRepository
                 .findDoctorProductivity(from.atStartOfDay(), to.plusDays(1).atStartOfDay())
                 .stream()
-                .map(row -> DoctorProductivityResponse.builder()
-                        .doctorId(((Number) row[0]).longValue())
-                        .doctorName(row[1] + " " + row[2])
-                        .specialtyName((String) row[3])
-                        .completedAppointments(((Number) row[4]).longValue())
-                        .build())
+                .map(row -> new DoctorProductivityResponse(
+                        ((Number) row[0]).longValue(),
+                        row[1] + " " + row[2],
+                        (String) row[3],
+                        ((Number) row[4]).longValue()
+                ))
                 .toList();
+
+        return applyPagination(allResponses, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<NoShowPatientResponse> getNoShowPatients(LocalDate from, LocalDate to) {
-        return appointmentRepository
+    public Page<NoShowPatientResponse> getNoShowPatients(LocalDate from, LocalDate to, Pageable pageable) {
+        List<NoShowPatientResponse> allResponses = appointmentRepository
                 .findNoShowPatients(from.atStartOfDay(), to.plusDays(1).atStartOfDay())
                 .stream()
-                .map(row -> NoShowPatientResponse.builder()
-                        .patientId(((Number) row[0]).longValue())
-                        .patientName(row[1] + " " + row[2])
-                        .documentNumber((String) row[3])
-                        .noShowCount(((Number) row[4]).longValue())
-                        .build())
+                .map(row -> new NoShowPatientResponse(
+                        ((Number) row[0]).longValue(),
+                        row[1] + " " + row[2],
+                        (String) row[3],
+                        ((Number) row[4]).longValue()
+                ))
                 .toList();
+
+        return applyPagination(allResponses, pageable);
+    }
+
+    private <T> Page<T> applyPagination(List<T> list, Pageable pageable) {
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), list.size());
+
+        if (start > list.size()) {
+            return Page.empty(pageable);
+        }
+
+        List<T> pagedList = list.subList(start, end);
+        return new PageImpl<>(pagedList, pageable, list.size());
     }
 }

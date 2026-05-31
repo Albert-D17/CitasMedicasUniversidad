@@ -1,7 +1,7 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CreateSpecialtyRequest;
-import com.universidad.consultorio.dto.response.SpecialtyResponse;
+import com.universidad.consultorio.dto.Request.CreateSpecialtyRequest;
+import com.universidad.consultorio.dto.Response.SpecialtyResponse;
 import com.universidad.consultorio.service.SpecialtyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

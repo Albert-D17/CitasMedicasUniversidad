@@ -1,6 +1,6 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.response.AvailabilitySlotResponse;
+import com.universidad.consultorio.dto.Response.AvailabilitySlotResponse;
 import com.universidad.consultorio.service.AvailabilityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

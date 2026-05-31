@@ -1,6 +1,7 @@
+
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.response.AvailabilitySlotResponse;
+import com.universidad.consultorio.dto.Response.AvailabilitySlotResponse;
 import com.universidad.consultorio.entity.Appointment;
 import com.universidad.consultorio.entity.AppointmentType;
 import com.universidad.consultorio.entity.DoctorSchedule;
@@ -11,6 +12,9 @@ import com.universidad.consultorio.repository.DoctorRepository;
 import com.universidad.consultorio.repository.DoctorScheduleRepository;
 import com.universidad.consultorio.service.AvailabilityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +35,12 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AvailabilitySlotResponse> getAvailableSlots(Long doctorId, LocalDate date, Long appointmentTypeId) {
+    public Page<AvailabilitySlotResponse> getAvailableSlots(
+            Long doctorId,
+            LocalDate date,
+            Long appointmentTypeId,
+            Pageable pageable) {
+
         if (!doctorRepository.existsById(doctorId)) {
             throw new ResourceNotFoundException("Doctor not found with id: " + doctorId);
         }
@@ -43,17 +52,17 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                 .findByDoctorIdAndDayOfWeek(doctorId, date.getDayOfWeek());
 
         if (schedules.isEmpty()) {
-            return List.of();
+            return Page.empty(pageable);
         }
 
         // Obtener citas ya confirmadas o programadas del doctor en esa fecha
         LocalDateTime dayStart = date.atStartOfDay();
-        LocalDateTime dayEnd   = date.atTime(LocalTime.MAX);
+        LocalDateTime dayEnd = date.atTime(LocalTime.MAX);
         List<Appointment> existing = appointmentRepository
                 .findActiveDoctorAppointmentsInRange(doctorId, dayStart, dayEnd);
 
         int duration = appointmentType.getDurationMinutes();
-        List<AvailabilitySlotResponse> slots = new ArrayList<>();
+        List<AvailabilitySlotResponse> allSlots = new ArrayList<>();
 
         for (DoctorSchedule schedule : schedules) {
             LocalDateTime cursor = date.atTime(schedule.getStartTime());
@@ -63,22 +72,24 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                 LocalDateTime slotEnd = cursor.plusMinutes(duration);
                 final LocalDateTime slotStart = cursor;
 
-                // El slot es válido si no solapa con ninguna cita existente
                 boolean overlaps = existing.stream().anyMatch(a ->
                         slotStart.isBefore(a.getEndAt()) && slotEnd.isAfter(a.getStartAt())
                 );
 
                 if (!overlaps) {
-                    slots.add(AvailabilitySlotResponse.builder()
-                            .startAt(slotStart)
-                            .endAt(slotEnd)
-                            .build());
+                    allSlots.add(new AvailabilitySlotResponse(slotStart, slotEnd));
                 }
 
                 cursor = cursor.plusMinutes(duration);
             }
         }
 
-        return slots;
+        // Aplicar paginación
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), allSlots.size());
+
+        List<AvailabilitySlotResponse> pagedSlots = allSlots.subList(start, end);
+
+        return new PageImpl<>(pagedSlots, pageable, allSlots.size());
     }
 }

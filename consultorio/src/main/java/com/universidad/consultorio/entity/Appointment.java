@@ -4,6 +4,7 @@ import com.universidad.consultorio.enums.AppointmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+
 import java.time.LocalDateTime;
 
 @Entity

@@ -1,10 +1,12 @@
 package com.universidad.consultorio.service;
 
-import com.universidad.consultorio.dto.response.AvailabilitySlotResponse;
+import com.universidad.consultorio.dto.Response.AvailabilitySlotResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 
 import java.time.LocalDate;
-import java.util.List;
 
 public interface AvailabilityService {
-    List<AvailabilitySlotResponse> getAvailableSlots(Long doctorId, LocalDate date, Long appointmentTypeId);
+    Page<AvailabilitySlotResponse> getAvailableSlots(Long doctorId, LocalDate date, Long appointmentTypeId, Pageable page);
 }

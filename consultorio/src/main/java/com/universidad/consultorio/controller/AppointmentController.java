@@ -1,13 +1,14 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CancelAppointmentRequest;
-import com.universidad.consultorio.dto.request.CreateAppointmentRequest;
-import com.universidad.consultorio.dto.response.AppointmentResponse;
+import com.universidad.consultorio.dto.Request.CreateAppointmentRequest;
+import com.universidad.consultorio.dto.Response.AppointmentResponse;
+import com.universidad.consultorio.dto.Request.CancelAppointmentRequest;
 import com.universidad.consultorio.service.AppointmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -25,9 +26,9 @@ public class AppointmentController {
     private final AppointmentService service;
 
     @PostMapping
-    public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody CreateAppointmentRequest req,
+    public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody CreateAppointmentRequest request,
                                                       UriComponentsBuilder uriBuilder) {
-        var created = service.create(req);
+        var created = service.create(request);
         var location = uriBuilder.path("/api/appointments/{id}").buildAndExpand(created.id()).toUri();
         return ResponseEntity.created(location).body(created);
     }
@@ -37,14 +38,15 @@ public class AppointmentController {
         return ResponseEntity.ok(service.findById(id));
     }
 
+
     @GetMapping
     public ResponseEntity<Page<AppointmentResponse>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        var result = service.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<AppointmentResponse> result = service.findAll(pageable); // Pasa el objeto pageable al servicio
         return ResponseEntity.ok(result);
     }
-
     @PutMapping("/{id}/confirm")
     public ResponseEntity<AppointmentResponse> confirm(@PathVariable Long id) {
         return ResponseEntity.ok(service.confirm(id));
@@ -52,8 +54,8 @@ public class AppointmentController {
 
     @PutMapping("/{id}/cancel")
     public ResponseEntity<AppointmentResponse> cancel(@PathVariable Long id,
-                                                      @Valid @RequestBody CancelAppointmentRequest req) {
-        return ResponseEntity.ok(service.cancel(id, req));
+                                                      @Valid @RequestBody CancelAppointmentRequest request) {
+        return ResponseEntity.ok(service.cancel(id, request ));
     }
 
     @PutMapping("/{id}/complete")

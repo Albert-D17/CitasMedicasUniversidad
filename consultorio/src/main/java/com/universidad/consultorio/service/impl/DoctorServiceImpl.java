@@ -1,8 +1,9 @@
+
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.request.CreateDoctorRequest;
-import com.universidad.consultorio.dto.request.UpdateDoctorRequest;
-import com.universidad.consultorio.dto.response.DoctorResponse;
+import com.universidad.consultorio.dto.Request.CreateDoctorRequest;
+import com.universidad.consultorio.dto.Request.UpdateDoctorRequest;
+import com.universidad.consultorio.dto.Response.DoctorResponse;
 import com.universidad.consultorio.entity.Doctor;
 import com.universidad.consultorio.entity.Specialty;
 import com.universidad.consultorio.exception.ResourceNotFoundException;
@@ -11,6 +12,7 @@ import com.universidad.consultorio.repository.DoctorRepository;
 import com.universidad.consultorio.repository.SpecialtyRepository;
 import com.universidad.consultorio.service.DoctorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,15 +29,16 @@ public class DoctorServiceImpl implements DoctorService {
     @Override
     @Transactional
     public DoctorResponse create(CreateDoctorRequest request) {
-        Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
-                .orElseThrow(() -> new ResourceNotFoundException("Specialty not found: " + request.getSpecialtyId()));
+        Specialty specialty = specialtyRepository.findById(request.specialtyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Specialty not found: " + request.specialtyId()));
 
         Doctor doctor = Doctor.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .licenseNumber(request.getLicenseNumber())
-                .email(request.getEmail())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .licenseNumber(request.licenseNumber())
+                .email(request.email())
                 .specialty(specialty)
+                .active(true)
                 .build();
 
         return doctorMapper.toResponse(doctorRepository.save(doctor));
@@ -49,15 +52,18 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<DoctorResponse> findAll() {
-        return doctorRepository.findAll().stream().map(doctorMapper::toResponse).toList();
+    public List<DoctorResponse> findAll(Pageable pageable) {
+        return doctorRepository.findAll(pageable).stream()
+                .map(doctorMapper::toResponse)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<DoctorResponse> findBySpecialty(Long specialtyId) {
-        return doctorRepository.findBySpecialtyIdAndActiveTrue(specialtyId)
-                .stream().map(doctorMapper::toResponse).toList();
+    public List<DoctorResponse> findBySpecialty(Long specialtyId, Pageable pageable) {
+        return doctorRepository.findBySpecialtyIdAndActiveTrue(specialtyId, pageable).stream()
+                .map(doctorMapper::toResponse)
+                .toList();
     }
 
     @Override
@@ -65,13 +71,22 @@ public class DoctorServiceImpl implements DoctorService {
     public DoctorResponse update(Long id, UpdateDoctorRequest request) {
         Doctor doctor = getOrThrow(id);
 
-        if (request.getFirstName()   != null) doctor.setFirstName(request.getFirstName());
-        if (request.getLastName()    != null) doctor.setLastName(request.getLastName());
-        if (request.getEmail()       != null) doctor.setEmail(request.getEmail());
-        if (request.getActive()      != null) doctor.setActive(request.getActive());
-        if (request.getSpecialtyId() != null) {
-            Specialty specialty = specialtyRepository.findById(request.getSpecialtyId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Specialty not found: " + request.getSpecialtyId()));
+        // ✅ CORRECTO: Usar JsonNullable.isPresent()
+        if (request.firstName().isPresent()) {
+            doctor.setFirstName(request.firstName().get());
+        }
+        if (request.lastName().isPresent()) {
+            doctor.setLastName(request.lastName().get());
+        }
+        if (request.email().isPresent()) {
+            doctor.setEmail(request.email().get());
+        }
+        if (request.active().isPresent()) {
+            doctor.setActive(request.active().get());
+        }
+        if (request.specialtyId().isPresent()) {
+            Specialty specialty = specialtyRepository.findById(request.specialtyId().get())
+                    .orElseThrow(() -> new ResourceNotFoundException("Specialty not found: " + request.specialtyId().get()));
             doctor.setSpecialty(specialty);
         }
 
