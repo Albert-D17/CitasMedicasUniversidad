@@ -1,6 +1,6 @@
 package com.universidad.consultorio.mapper;
 
-import com.universidad.consultorio.dto.response.OfficeResponse;
+import com.universidad.consultorio.dto.Response.OfficeResponse;
 import com.universidad.consultorio.entity.Office;
 import org.springframework.stereotype.Component;
 

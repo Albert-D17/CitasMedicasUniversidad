@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
-
+//Entidad Doctor
 @Entity
 @Table(name = "doctors")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

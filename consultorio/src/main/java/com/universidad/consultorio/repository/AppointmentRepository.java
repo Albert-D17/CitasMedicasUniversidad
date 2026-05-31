@@ -141,4 +141,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+    void deleteAll();
 }

@@ -1,8 +1,9 @@
+
 package com.universidad.consultorio.service.impl;
 
-import com.universidad.consultorio.dto.request.CreatePatientRequest;
-import com.universidad.consultorio.dto.request.UpdatePatientRequest;
-import com.universidad.consultorio.dto.response.PatientResponse;
+import com.universidad.consultorio.dto.Request.CreatePatientRequest;
+import com.universidad.consultorio.dto.Request.UpdatePatientRequest;
+import com.universidad.consultorio.dto.Response.PatientResponse;
 import com.universidad.consultorio.entity.Patient;
 import com.universidad.consultorio.exception.ConflictException;
 import com.universidad.consultorio.exception.ResourceNotFoundException;
@@ -10,10 +11,10 @@ import com.universidad.consultorio.mapper.PatientMapper;
 import com.universidad.consultorio.repository.PatientRepository;
 import com.universidad.consultorio.service.PatientService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,16 +26,18 @@ public class PatientServiceImpl implements PatientService {
     @Override
     @Transactional
     public PatientResponse create(CreatePatientRequest request) {
-        patientRepository.findByDocumentNumber(request.getDocumentNumber())
-                .ifPresent(p -> { throw new ConflictException(
-                        "Patient with document number " + request.getDocumentNumber() + " already exists"); });
+        patientRepository.findByDocumentNumber(request.documentNumber())
+                .ifPresent(p -> {
+                    throw new ConflictException("Patient with document number " + request.documentNumber() + " already exists");
+                });
 
         Patient patient = Patient.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .documentNumber(request.getDocumentNumber())
-                .email(request.getEmail())
-                .phone(request.getPhone())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .documentNumber(request.documentNumber())
+                .email(request.email())
+                .phone(request.phone())
+                .status(request.status())
                 .build();
 
         return patientMapper.toResponse(patientRepository.save(patient));
@@ -48,8 +51,9 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PatientResponse> findAll() {
-        return patientRepository.findAll().stream().map(patientMapper::toResponse).toList();
+    public Page<PatientResponse> findAll(Pageable page) {
+        return patientRepository.findAll(page)
+                .map(patientMapper::toResponse);
     }
 
     @Override
@@ -57,11 +61,21 @@ public class PatientServiceImpl implements PatientService {
     public PatientResponse update(Long id, UpdatePatientRequest request) {
         Patient patient = getOrThrow(id);
 
-        if (request.getFirstName() != null) patient.setFirstName(request.getFirstName());
-        if (request.getLastName()  != null) patient.setLastName(request.getLastName());
-        if (request.getEmail()     != null) patient.setEmail(request.getEmail());
-        if (request.getPhone()     != null) patient.setPhone(request.getPhone());
-        if (request.getStatus()    != null) patient.setStatus(request.getStatus());
+        if (request.firstName().isPresent()) {
+            patient.setFirstName(request.firstName().get());
+        }
+        if (request.lastName().isPresent()) {
+            patient.setLastName(request.lastName().get());
+        }
+        if (request.email().isPresent()) {
+            patient.setEmail(request.email().get());
+        }
+        if (request.phone().isPresent()) {
+            patient.setPhone(request.phone().get());
+        }
+        if (request.status().isPresent()) {
+            patient.setStatus(request.status().get());
+        }
 
         return patientMapper.toResponse(patientRepository.save(patient));
     }

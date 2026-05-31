@@ -1,8 +1,9 @@
 package com.universidad.consultorio.mapper;
 
-import com.universidad.consultorio.dto.response.SpecialtyResponse;
+import com.universidad.consultorio.dto.Response.SpecialtyResponse;
 import com.universidad.consultorio.entity.Specialty;
 import org.springframework.stereotype.Component;
+
 
 @Component
 public class SpecialtyMapper {

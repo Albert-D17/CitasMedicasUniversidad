@@ -1,7 +1,7 @@
 package com.universidad.consultorio.controller;
 
-import com.universidad.consultorio.dto.request.CreateAppointmentTypeRequest;
-import com.universidad.consultorio.dto.response.AppointmentTypeResponse;
+import com.universidad.consultorio.dto.Request.CreateAppointmentTypeRequest;
+import com.universidad.consultorio.dto.Response.AppointmentTypeResponse;
 import com.universidad.consultorio.service.AppointmentTypeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class AppointmentTypeController {
     public ResponseEntity<Page<AppointmentTypeResponse>> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        var result = service.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+        Page<AppointmentTypeResponse> result = service.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
         return ResponseEntity.ok(result);
     }
 }
